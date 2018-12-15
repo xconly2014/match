@@ -1,0 +1,142 @@
+{extend name="base" /}
+{block name="title"}收益提现申请列表 | 管理后台{/block}
+{block name="content"}
+<div class="row">
+    <div class="col-xs-12">
+        <nav class="navbar navbar-default" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <span class="navbar-brand">收益提现申请列表</span>
+                </div>
+                <form class="navbar-form navbar-left navbar-right" role="search" id="search-form">
+                    <div class="form-group">
+                        <select class="form-control" name="status">
+                            <option {$Request.param.status===''?='selected="selected"'} value="">全部</option>
+                            <option {$Request.param.status==='1'?='selected="selected"'} value="1">待审核</option>
+                            <option {$Request.param.status==2?='selected="selected"'} value="2">已完成</option>
+                            <option {$Request.param.status==3?='selected="selected"'} value="3">已驳回</option>
+                        </select>
+                        <input type="text" name="keyword" class="form-control" placeholder="Search" value="{$Request.param.keyword}">
+                    </div>
+                    <button type="submit" class="btn btn-default">搜索</button>
+                </form>
+            </div>
+        </nav>
+    </div>
+</div>
+<div class="alert alert-warning">！[完成]操作只标记和通知用户，未有具体转账过程。</div>
+<div class="table-responsive" style="min-width: 1200px;">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>订单号</th>
+            <th>用户</th>
+            <th>申请金额</th>
+            <th>用户余额</th>
+            <th>参考金额 <i class="glyphicon glyphicon-exclamation-sign text-danger"
+                      data-container="body" data-toggle="popover" data-placement="bottom"
+                      data-content="用户余额扣去三天内收益。如果该金额小于申请金额，建议等待3天再操作。"></i></th>
+            <th>已提现</th>
+            <th>申请时间</th>
+            <th>审核时间</th>
+            <th>操作&状态</th>
+        </tr>
+        </thead>
+        <tbody>
+        {notempty name="list"}
+        {volist name="list" id="row"}
+        <tr>
+            <td>{$row.order_id}</td>
+            <td><a href="/manage/user/{$row.user.uid}">{$row.user.nick|default=""}</a></td>
+            <td class="apply_amount">{$row.apply_amount/100|sprintf="%.2f",###}</td>
+            <td><span class="{$row.user.income*100<$row.apply_amount?'text-danger':''}">{$row.user.income|sprintf="%.2f",###}</span></td>
+            <td><span class="{$row.availableIncome<$row.apply_amount?'text-danger':''}">{$row.availableIncome/100|sprintf="%.2f",###}</span></td>
+            <td>{$row.settle_amount/100|sprintf="%.2f",###}</td>
+            <td>{$row.create_time|date="Y-m-d H:i:s",###}</td>
+            <td>{notempty name="row.auth_time"}{$row.auth_time|date='Y-m-d H:i:s',###}{/notempty}</td>
+            <td>
+                <a class="btn btn-xs btn-info" href="/manage/inc-order-detail/{$row.order_id}">查看</a>
+                <span class="btn-box" data-id="{$row.id}" >
+                    {switch name="$row->getData('auth_status')" }
+                    {case value="1"}
+                    <button class="btn btn-xs btn-success btn-pass" data-apply-amount="{$row.apply_amount/100|sprintf="%.2f",###}">完成</button>
+                    <button class="btn btn-xs btn-danger btn-reject" data-toggle="modal" data-target="#rejModal">驳回</button>{/case}
+                    {case value="2"}<span class="text-success">已完成</span>{/case}
+                    {case value="3"}<span class="text-danger">驳回:{$row.reject_reason}</span>{/case}
+                    {/switch}
+                </span>
+
+            </td>
+        </tr>
+        {/volist}
+        {/notempty}
+        </tbody>
+    </table>
+</div>
+
+{include file="page" /}
+<!-- 模态框（驳回） -->
+<div class="modal fade" id="rejModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">驳回理由</h4>
+            </div>
+            <div class="modal-body">
+                <form role="form">
+                    <div class="form-group">
+                        <textarea class="form-control" rows="3" style="resize: none;"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btn-reject-submit">驳回</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+{/block}
+{block name="javascripts"}
+<script type="text/javascript">
+    $(function() {
+        $("[data-toggle='popover']").popover();
+        /* 完成 */
+        $('.btn-pass').click(function() {
+            var box = $(this).parents('.btn-box'),
+                applyAmount = $(this).attr('data-apply-amount');
+                id = box.attr('data-id');
+            var price=prompt("请确认已提现给用户的金额", applyAmount);
+            if(price) {
+                $.post('/manage/jsApi/inc_order_pass', {id: id, amount: applyAmount}, function (resp) {
+                    if (resp.code == '1') {
+                        box.html('<span class="text-success">已完成</span>');
+                    } else {
+                        alert(resp.message);
+                    }
+                });
+            }
+        });
+        /* 驳回 */
+        var rejModalId = 0;
+        $('.btn-reject').click(function() {
+            rejModalId = $(this).parents('.btn-box').attr('data-id');
+        });
+        $('#btn-reject-submit').click(function () {
+            var modal = $(this).parents('#rejModal'),
+                reason = modal.find('textarea').val().trim();
+            if(reason) {
+                $.post('/manage/jsApi/inc_order_reject', {id: rejModalId, reason: reason}, function (resp) {
+                    if(resp.code == '1') {
+                        $('.btn-box[data-id='+rejModalId+']').html('<span class="text-danger">驳回:'+ reason +'</span>');
+                        modal.modal('hide');
+                    } else {
+                        alert(resp.message);
+                    }
+                });
+            }
+        });
+    });
+</script>
+{/block}

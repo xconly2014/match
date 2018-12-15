@@ -1,0 +1,196 @@
+{extend name="base" /}
+{block name="title"}订单申诉列表 | 管理后台{/block}
+{block name="content"}
+<div class="row">
+    <div class="col-xs-12">
+        <nav class="navbar navbar-default" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <span class="navbar-brand">订单申诉列表</span>
+                </div>
+                <form class="navbar-form navbar-left navbar-right" role="search" id="search-form">
+                    <div class="form-group">
+                        <select class="form-control" name="status">
+                            <option {$Request.param.status===''?='selected="selected"'} value="">全部</option>
+                            <option {$Request.param.status==='0'?='selected="selected"'} value="0">未完成</option>
+                            <option {$Request.param.status==1?='selected="selected"'} value="1">已完成</option>
+                        </select>
+                        <input type="text" name="keyword" class="form-control" placeholder="Search" value="{$Request.param.keyword}">
+                    </div>
+                    <button type="submit" class="btn btn-default">搜索</button>
+                </form>
+            </div>
+        </nav>
+    </div>
+</div>
+<div class="table-responsive" style="min-width: 1200px;">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>订单号</th>
+            <th>买家</th>
+            <th>大神</th>
+            <th>申诉内容</th>
+            <th>证据</th>
+            <th>审核</th>
+            <th>退款</th>
+            <th>完成</th>
+            <th>创建时间</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        {notempty name="list"}
+        {volist name="list" id="appeal"}
+        <tr>
+            <td>{$appeal.id}</td>
+            <td>{$appeal.orderObj.order_id}</td>
+            <td><a href="/manage/user/{$appeal.orderObj.user.uid}">{$appeal.user.nick|default=""}</a></td>
+            <td><a href="/manage/user/{$appeal.orderObj.talent.user.uid}">{$appeal.orderObj.talent.user.nick|default=""}</a></td>
+            <td>{$appeal.content}</td>
+            <td><img src="{$appeal.proof_0}" style="width: 80px"/>
+                <img src="{$appeal.proof_1}" style="width: 80px"/></td>
+            <td class="auth">{switch name="$appeal->getData('auth_status')"}
+            {case value="2"}<span class="text-success"><i class="glyphicon glyphicon-ok"></i></span>{/case}
+            {case value="3"}<span class="text-danger">{$appeal.reject_reason}</span>{/case}
+            {/switch}</td>
+            <td class="refund">{if condition="$appeal->getData('refund_flag') == 1"}
+                    <i class="text-success glyphicon glyphicon-ok"></i>
+                {/if}</td>
+            <td class="over">{if condition="$appeal->getData('over_flag') == 1"}
+                <i class="text-success glyphicon glyphicon-ok"></i>
+                {/if}</td>
+            <td>{$appeal.create_time|date="Y-m-d H:i:s",###}</td>
+            <td data-id="{$appeal.id}">
+                {if condition="$appeal->getData('auth_status') == 2 && $appeal->getData('refund_flag') == 0"}
+                    <button class="btn btn-xs btn-warning btn-refund">退款</button>
+                {/if}
+                {if condition="$appeal->getData('over_flag') == 0"}
+                    {if condition="$appeal->getData('auth_status') <= 1"}
+                        <button class="btn btn-xs btn-primary btn-pass">同意</button>
+                        <button class="btn btn-xs btn-danger btn-reject" data-toggle="modal" data-target="#rejModal">驳回</button>
+                    {/if}
+                    {if condition="$appeal->getData('auth_status') > 1"}
+                        <button class="btn btn-xs btn-success btn-over">完成</button>
+                    {/if}
+                {/if}
+            </td>
+        </tr>
+        {/volist}
+        {/notempty}
+        </tbody>
+    </table>
+</div>
+
+{include file="page" /}
+
+<!-- 模态框（大图） -->
+<div class="modal fade" id="imgModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <img src="" style="max-width: 1200px;" />
+    </div><!-- /.modal -->
+</div>
+<!-- 模态框（驳回） -->
+<div class="modal fade" id="rejModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">驳回理由</h4>
+            </div>
+            <div class="modal-body">
+                <form role="form">
+                    <div class="form-group">
+                        <textarea class="form-control" rows="3" style="resize: none;"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btn-reject-submit">驳回</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+{/block}
+{block name="javascripts"}
+<script type="text/javascript">
+    $(function() {
+        $('td img').click(function() {
+            var src = $(this).attr('src');
+            $('#imgModal img').attr('src', src);
+            $('#imgModal').modal('show');
+        });
+        /* 完成 */
+        $('table').on('click', '.btn-over', function() {
+            var eleTd = $(this).parents('td'),
+                id = eleTd.attr('data-id');
+            if(confirm('标记该申诉为“完成处理”？')) {
+                $.post('/manage/jsApi/appeal_over', {id: id}, function (resp) {
+                    if (resp.code == '1') {
+                        eleTd.html('');
+                        eleTd.siblings('.over').html('<i class="text-success glyphicon glyphicon-ok"></i>');
+                    } else {
+                        alert(resp.message);
+                    }
+                });
+            }
+        });
+        /* 退款 */
+        $('table').on('click', '.btn-refund', function() {
+            var obj = $(this),
+                eleTd = $(this).parents('td'),
+                id = eleTd.attr('data-id');
+            if(confirm('将订单资费退还到用户钱包？')) {
+                $.post('/manage/jsApi/appeal_refund', {id: id}, function (resp) {
+                    if (resp.code == '1') {
+                        eleTd.siblings('.refund').html('<i class="text-success glyphicon glyphicon-ok"></i>');
+                        obj.remove();
+                    } else {
+                        alert(resp.message);
+                    }
+                });
+            }
+        });
+
+        /* 同意 */
+        $('.btn-pass').click(function() {
+            var obj = $(this),
+                eleTd = obj.parents('td'),
+                id = eleTd.attr('data-id');
+            if(confirm('确认同意申诉？')) {
+                $.post('/manage/jsApi/appeal_pass', {id: id}, function (resp) {
+                    if (resp.code == '1') {
+                        eleTd.siblings('.auth').html('<i class="text-success glyphicon glyphicon-ok"></i>');
+                        eleTd.html('<button class="btn btn-xs btn-warning btn-refund">退款</button><button class="btn btn-xs btn-success btn-over">完成</button>');
+                    } else {
+                        alert(resp.message);
+                    }
+                });
+            }
+        });
+        /* 驳回 */
+        var rejModalId = 0;
+        $('.btn-reject').click(function() {
+            rejModalId = $(this).parents('td').attr('data-id');
+        });
+        $('#btn-reject-submit').click(function () {
+            var modal = $(this).parents('#rejModal'),
+                reason = modal.find('textarea').val().trim(),
+                eleTd = $('td[data-id='+rejModalId+']');
+            if(reason) {
+                $.post('/manage/jsApi/appeal_reject', {id: rejModalId, reason: reason}, function (resp) {
+                    if(resp.code == '1') {
+                        eleTd.siblings('.auth').html('<span class="text-danger">'+ reason +'</span>');
+                        eleTd.html('<button class="btn btn-xs btn-success btn-over">完成</button>');
+                        modal.modal('hide');
+                    } else {
+                        alert(resp.message);
+                    }
+                });
+            }
+        });
+    });
+</script>
+{/block}

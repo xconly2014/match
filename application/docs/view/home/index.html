@@ -1,0 +1,26 @@
+{extend name="base" /}
+
+{block name="content"}
+<div class="container">
+    <!-- Example row of columns -->
+    {volist name="list" id="sublist"}
+    <div class="row">
+        {volist name="sublist" id="vo"}
+        <div class="col-md-4">
+            <h2>{$vo.title}</h2>
+            <table class="table table-condensed">
+                <tbody>
+                {volist name="vo.actions" id="act"}
+                <tr>
+                    <td>{$act.title}</td>
+                    <td><a href="/api/docs/info?name={$act.name}">查看</a></td>
+                    {if condition="editAble()"}<td><a href="/api/docs/edit?name={$act.name}">编辑</a></td>{/if}
+                {/volist}
+                </tbody>
+            </table>
+        </div>
+        {/volist}
+    </div>
+    {/volist}
+</div> <!-- /container -->
+{/block}

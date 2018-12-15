@@ -1,0 +1,49 @@
+<?php
+if(isset($page) && isset($total) && isset($limit) && $total > 0):
+
+$total_page = ceil($total/$limit);
+$page_end = ceil( $page / 5 ) * 5;
+$page_start = $page_end - 4;
+$page_end = min($total_page, $page_end);
+$prev = $page_start > 5 ? $page - 5 : '';
+$next = $page_end < $total_page ? $page + 5 : '';
+is_numeric($next) && $next = min($next, $total_page);
+if( isset($_GET['page']) ) { unset($_GET['page']);}
+?>
+{empty name="$_GET"}
+    {assign name="url" value="$Request.path.'?page='" /}
+{else}
+    {assign name="url" value="$Request.path.'?'.(http_build_query($_GET)).'&page='" /}
+{/empty}
+<div class="row">
+    <div class="pull-right">
+        <ul class="pagination">
+            {empty  name="$prev"}
+                <li class="disabled"><a href="javascript:;">&laquo;</a></li>
+            {else}
+                <li><a href="/{$url}{$prev}">&laquo;</a></li>
+            {/empty}
+
+            {for start="$page_start" end="$page_end+1" name="i"}
+            {eq name="page", value="$i" }
+                <li class="active"><a href="javascript:;">{$i}</a></li>
+            {else}
+                <li><a href="/{$url}{$i}">{$i}</a></li>
+            {/eq}
+            {/for}
+
+            {empty  name="$next"}
+            <li class="disabled"><a href="javascript:;">&raquo;</a></li>
+            {else}
+            <li><a href="/{$url}{$next}">&raquo;</a></li>
+            {/empty}
+
+            {lt name="page" value="$total_page"}
+            <li><a href="/{$url}{$total_page}">Last</a></li>
+            {/lt}
+
+            <li class="disabled"><a href="javascript:;">共：{$total} 条</a></li>
+        </ul>
+    </div>
+</div>
+<?php endif; ?>

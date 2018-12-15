@@ -1,0 +1,372 @@
+{extend name="base" /}
+{block name="title"}说明|ApiDocs!{/block}
+{block name="content"}
+
+<div class="container">
+
+    <div class="blog-header">
+        <h1 class="blog-title">接口说明</h1>
+        <p class="lead blog-description">开始前必读.</p>
+    </div>
+
+    <div class="row">
+
+        <div class="col-sm-8 blog-main">
+
+            <div class="blog-post">
+                <h2 class="blog-post-title page-header">头部和凭证</h2>
+                <blockquote>
+                    <code>GET /api/v1/user/:uid<br/>
+                        Host: domain.com<br/>
+                        Authorization: We test123456:Sf2md1axbVmASByV+/9QZGMr46w=<br/>
+                        We-Param: Android/1.0.0/1507706385</code>
+                </blockquote>
+                <p>所有接口请求需加入定义的头部信息，头部提供最基本接入信息和接入凭证验证</p>
+                <h3>We-Param</h3>
+                <p>We-Param 为接口提供最基本的接入信息，包括: 设备类型，客户端版本号，本次请求时间戳（秒）以“/”隔开</p>
+                <h3>Authorization</h3>
+                <p>用于验证请求合法性的认证信息。请头部严格按照以下凭证生成步骤进行填充, 暂定一组公/私钥为:</p>
+                <blockquote>
+                    <code>AccessKey：'test123456'<br/>
+                        SecretKey：'654321test'</code>
+                </blockquote>
+                <p>步骤：</p>
+                <ul>
+                    <li>使用SecretKey对We-Param原始字符串计算HMAC-SHA1签名<br/>
+                        <pre>sign = hmac_sha1(We-Param, "&lt;SecretKey&gt;")</pre>
+                    </li>
+                    <li>对签名进行Base64编码<br/>
+                        <pre>encodedSign = base64_encode(sign)</pre>
+                    </li>
+                    <li>将 AccessKey 和 encodedSign 用英文分号连接起来<br/>
+                        <pre>accessToken = &lt;AccessKey&gt; + ":" + encodedSign</pre>
+                    </li>
+                    <li>在前部连接上We + 空格<br/>
+                        <pre>authorization = "We " + accessToken</pre>
+                    </li>
+                </ul>
+            </div><!-- /.blog-post -->
+
+            <div class="blog-post">
+                <h2 class="blog-post-title page-header">RESTful API</h2>
+                <p>接口Url和请求方式会尽量以符合RESTful API 规范方式来开发,接口的基本路径规则如下：</p>
+                <blockquote>
+                    <code>/api/:version/&lt;resource&gt;<br/>/api/:version/&lt;resource&gt;/:id<br/>/api/:version/&lt;resource&gt;/:id/do_something</code>
+                </blockquote>
+                <p>其中:version为版本代号（目前只有版本'v1'）,&lt;resource&gt;为访问资源名称，:id表示资源的具体ID</p>
+
+                <p>请求资源方式的不同，代表不同的操作</p>
+                <ul>
+                    <li>GET：从服务器读取资源</li>
+                    <li>POST：新建一个资源到服务器</li>
+                    <li>PUT/PATCH：在服务器更新资源</li>
+                    <li>DELETE：从服务器删除资源</li>
+                </ul>
+
+            </div>
+
+
+            <div class="blog-post">
+                <h2 class="blog-post-title page-header">响应Json</h2>
+                <table class="table table-bordered">
+                    <caption>响应json基本字段含义</caption>
+                    <thead>
+                    <tr>
+                        <th>名称</th>
+                        <th>值</th>
+                        <th>说明</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>code</td>
+                        <td>0,1</td>
+                        <td>响应结果,“1”表示成功, 其他表示具体错误代码</td>
+                    </tr>
+                    <tr>
+                        <td>message</td>
+                        <td>文本</td>
+                        <td>成功（“ok”）或具体错误消息</td>
+                    </tr>
+                    <tr>
+                        <td>data</td>
+                        <td>字典或数组</td>
+                        <td>包含具体请求数据的字典或数组</td>
+                    </tr>
+                    <tr>
+                        <td>data._time</td>
+                        <td>时间戳(s)</td>
+                        <td>服务器接受到请求的时间</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <p>示例：</p>
+                <pre>{
+    "code": 1,
+    "message": "ok",
+    "data": {
+        "uid": "59df369e0409a",
+        "nick": "王者昵称",
+        "icon": "http://static.img/...example.png",
+        "_time": "1508125459"
+    }
+}</pre>
+
+            </div>
+
+            <div class="blog-post">
+                <h2 class="blog-post-title page-header">极光标签</h2>
+                <table class="table table-bordered">
+                    <caption>极光推送中定义的一些标签（tag）说明</caption>
+                    <thead>
+                    <tr>
+                        <th>示例</th>
+                        <th>说明</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>talent</td>
+                        <td>表示该用户已通过大神认证审核</td>
+                    </tr>
+                    <tr>
+                        <td>T_MAX_LEVEL_*</td>
+                        <td>大神认证最高段位 倔强青铜 ~ 最强王者</td>
+                    </tr>
+                    <tr>
+                        <td>T_AREA_*</td>
+                        <td>大神认证区服</td>
+                    </tr>
+                    <tr>
+                        <td>T_SYSTEM_*</td>
+                        <td>大神认证系统</td>
+                    </tr>
+                    <tr>
+                        <td>T_SWITCH_ON</td>
+                        <td>大神开启了接单</td>
+                    </tr>
+
+                    </tbody>
+                </table>
+
+            </div>
+
+            <div class="blog-post" id="Jpush-Extras">
+                <h2 class="blog-post-title page-header">极光Extras</h2>
+                <table class="table table-bordered">
+                    <caption>极光推送中扩展字段的一些定义说明</caption>
+                    <thead>
+                    <tr>
+                        <th>type</th>
+                        <th>说明</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>0</td>
+                        <td>登录已失效，账号在其他设备登录</td>
+                    </tr>
+                    <tr>
+                        <td>201</td>
+                        <td>呼叫老司机时，大神收到的推送。其附加字段为：
+                            <ul>
+                                <li>id: 此次呼叫的ID</li>
+                                <li>user_id：呼叫方UID</li>
+                                <li>icon：呼叫方头像</li>
+                                <li>nick：昵称</li>
+                                <li>sex：性别 1男 2女</li>
+                                <li>age：年龄</li>
+                                <li>max_level：期望游戏段位</li>
+                                <li>area：期望游戏区服</li>
+                                <li>system：期望手机系统</li>
+                                <li>round：预约游戏局数</li>
+                                <li>create_time：创建时间，请自行判断超时，10分钟后不可再抢单</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>202</td>
+                        <td>大神回应呼叫，客户收到的透传消息。
+                            <ul>
+                                <li>id: 大神ID</li>
+                                <li>user_id：大神的UID</li>
+                                <li>icon：大神头像</li>
+                                <li>nick：昵称</li>
+                                <li>sex：性别 1男 2女</li>
+                                <li>age：年龄</li>
+                                <li>area：服务区服</li>
+                                <li>system：手机系统</li>
+                                <li>level：大神评级</li>
+                                <li>max_level：大神段位</li>
+                                <li>hero：擅长英雄</li>
+                                <li>honour：成就</li>
+                                <li>cert_sex：性别 1.男 2.女</li>
+                                <li>order_num：历史接单数</li>
+                                <li>win_rate：胜率</li>
+                                <li>price：预计订单价格</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>203</td>
+                        <td>[系统消息] 大神被约推送.
+                            <ul>
+                                <li>user_id：呼叫方UID</li>
+                                <li>icon：呼叫方头像</li>
+                                <li>nick：昵称</li>
+                                <li>sex：性别 1男 2女</li>
+                                <li>age：年龄</li>
+                                <li>order_id：订单号</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>300</td>
+                        <td>[订单消息] 用户发起申诉时推送.
+                            <ul>
+                                <li>user_id：呼叫方UID</li>
+                                <li>icon：呼叫方头像</li>
+                                <li>nick：昵称</li>
+                                <li>sex：性别 1男 2女</li>
+                                <li>age：年龄</li>
+                                <li>order_id：订单号</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>301</td>
+                        <td>[订单消息] 订单申诉成功推送（用户）.
+                            <ul>
+                                <li>order_id：订单号</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>302</td>
+                        <td>[订单消息] 订单申诉失败推送（用户）.
+                            <ul>
+                                <li>order_id：订单号</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>311</td>
+                        <td>[订单消息] 订单申诉成功推送（大神）.
+                            <ul>
+                                <li>order_id：订单号</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>312</td>
+                        <td>[订单消息] 订单申诉失败推送（大神）.
+                            <ul>
+                                <li>order_id：订单号</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>401</td>
+                        <td>[系统消息] 大神认证审核成功， 具体见大神基本资料接口</td>
+                    </tr>
+                    <tr>
+                        <td>402</td>
+                        <td>[系统消息] 大神认证审核失败， 具体见大神基本资料接口</td>
+                    </tr>
+                    <tr>
+                        <td>[系统消息] 501</td>
+                        <td>订单退款，转到钱包账户通知
+                            <ul>
+                                <li>order_id：订单号</li>
+                                <li>price：到账金额</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr style="border: 2px solid #e4b9b9">
+                        <td>502</td>
+                        <td>[系统消息] 大神审核失败退款，转到钱包账户通知
+                            <ul>
+                                <li>order_id：订单号</li>
+                                <li>price：到账金额</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>511</td>
+                        <td>[系统消息] 订单完成，佣金到账推送
+                            <ul>
+                                <li>order_id：订单号</li>
+                                <li>price：到账金额</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>512</td>
+                        <td>[系统消息] 申诉后，大神被扣除佣金推送
+                            <ul>
+                                <li>order_id：订单号</li>
+                                <li>price：扣除金额</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>513</td>
+                        <td>[系统消息] 收益提现成功推送，大神收益余额被扣除时发出
+                            <ul>
+                                <li>price：扣除金额</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr style="border: 2px solid #e4b9b9">
+                        <td>514</td>
+                        <td>[系统消息] 收益提现审核失败推送</td>
+                    </tr>
+                    <tr>
+                        <td>1001</td>
+                        <td>[订单消息] 创建订单成功（支付成功），推送给用户
+                            <ul>
+                                <li>order_id：订单号</li>
+                                <li>price：订单金额</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>1002</td>
+                        <td>[订单消息] 订单完成，推送给用户
+                            <ul>
+                                <li>order_id：订单号</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>1003</td>
+                        <td>[订单消息] 订单取消，推送给用户
+                            <ul>
+                                <li>order_id：订单号</li>
+                            </ul>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!--<nav>
+                <ul class="pager">
+                    <li><a href="#">Previous</a></li>
+                    <li><a href="#">Next</a></li>
+                </ul>
+            </nav>-->
+            <div class="alert alert-success" role="alert">
+                <strong>!</strong> 文档持续完善中.
+            </div>
+        </div><!-- /.blog-main -->
+
+        <!--<div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+
+        </div>--><!-- /.blog-sidebar -->
+
+    </div><!-- /.row -->
+
+</div>
+
+{/block}

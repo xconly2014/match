@@ -1,0 +1,60 @@
+{extend name="base" /}
+{block name="title"}订单详情 | 管理后台{/block}
+{block name="content"}
+<div class="col-sm-8">
+    <h3 class="page-header">订单号：<small>{$order.order_id}</small></h3>
+    <div class="row">
+        <div class="col-sm-4">
+            <dl class="dl-horizontal">
+                <dt>申请人</dt>
+                <dd>{$order.user.nick}</dd>
+                <dt>大神</dt>
+                <dd>{$order.talent.user.nick}</dd>
+            </dl>
+        </div>
+        <div class="col-sm-4">
+            <dl class="dl-horizontal">
+                <dt>类型</dt>
+                <dd>{$order.type}</dd>
+                <dt>服务区服</dt>
+                <dd>{$order.area}</dd>
+                <dt>手机系统</dt>
+                <dd>{$order.system}</dd>
+            </dl>
+        </div>
+        <div class="col-sm-4">
+            <dl class="dl-horizontal">
+                <dt>数目</dt>
+                <dd>{$order.round} {$order->getData('type') === 0 ? '小时' : '局'}</dd>
+                <dt>价格</dt>
+                <dd>{$order.price} 元</dd>
+            </dl>
+        </div>
+    </div>
+    <div class="row">
+        <div class="table-responsive" style="min-width: 1200px;">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>订单号</th>
+                    <th>买家</th>
+                    <th>大神</th>
+                    <th>类型</th>
+                    <th>服务区服</th>
+                    <th>手机系统</th>
+                    <th>数目</th>
+                    <th>价格</th>
+                    <th>支付</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{/block}

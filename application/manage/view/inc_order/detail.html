@@ -1,0 +1,144 @@
+{extend name="base" /}
+{block name="title"}提现申请订单详情 | 管理后台{/block}
+{block name="content"}
+<style>
+.dl-horizontal dt { width: 100px; }
+.dl-horizontal dd { margin-left: 120px; }
+.text-red {color: #f0ad4e}
+</style>
+<div class="col-sm-8">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            订单 <b>{$order.order_id}</b>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-xs-4">
+                    <dl class="dl-horizontal">
+                        <dt>申请人</dt>
+                        <dd><a href="#{$order.user.uid}">{$order.user.nick}</a></dd>
+                        <dt>审核状态</dt>
+                        <dd>{$order.auth_status}
+                            {eq name="$order->getData('auth_status')" value="3"}
+                            <span class="text-red">{$order.reject_reason}</span>
+                            {/eq}</dd>
+
+                    </dl>
+                </div>
+                <div class="col-xs-4">
+                    <dl class="dl-horizontal">
+                        <dt>申请时间</dt>
+                        <dd>{$order.create_time|date="Y-m-d H:i:s",###}</dd>
+                        <dt>审核时间</dt>
+                        <dd>{$order.auth_time|date="Y-m-d H:i:s",###}</dd>
+                    </dl>
+                </div>
+                <div class="col-xs-4">
+                    <dl class="dl-horizontal">
+                        <dt>申请金额</dt>
+                        <dd>{$order.apply_amount/100|sprintf="%.2f",###}</dd>
+                        <dt>结算金额</dt>
+                        <dd>{$order.settle_amount/100|sprintf="%.2f",###}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            绑定提现账号
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-xs-4">
+                    <dl class="dl-horizontal">
+                        <dt>类型</dt>
+                        <dd>{$order.user.wdAccount.account_type}</dd>
+                        <dt>姓名</dt>
+                        <dd>{$order.user.wdAccount.real_name}</dd>
+                    </dl>
+                </div>
+                <div class="col-xs-4">
+                    <dl class="dl-horizontal">
+                        <dt>账号</dt>
+                        <dd>{$order.user.wdAccount.account}</dd>
+                        <dt>APPID</dt>
+                        <dd>{$order.user.wdAccount.app_id}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <caption>近期收益流水</caption>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>交易类型</th>
+                        <th>交易金额</th>
+                        <th>服务费</th>
+                        <th>实时余额</th>
+                        <th>关联订单</th>
+                        <th>时间</th></tr>
+                    </thead>
+                    <tbody>
+                    {notempty name="incomes"}
+                    {volist name="incomes" id="income"}
+                    <tr>
+                        <td>{$income.id}</td>
+                        <td>{$income.trade_type}</td>
+                        <td>{$income.total_fee/100|sprintf="%.2f"}</td>
+                        <td>{$income.service_fee/100|sprintf="%.2f"}</td>
+                        <td>{$income.cur_income|sprintf="%.2f"}</td>
+                        <td>{$income.trade_no}</td>
+                        <td>{$income.create_time}</td>
+                    </tr>
+                    {/volist}
+                    {/notempty}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <caption>最近提现申请</caption>
+                    <thead>
+                    <tr>
+                        <th>订单号</th>
+                        <th>申请金额</th>
+                        <th>结算金额</th>
+                        <th>状态</th>
+                        <th>审核时间</th>
+                        <th>申请时间</th></tr>
+                    </thead>
+                    <tbody>
+                    {notempty name="orders"}
+                    {volist name="orders" id="o"}
+                    <tr>
+                        <td>{$o.order_id}</td>
+                        <td>{$o.apply_amount/100|sprintf="%.2f",###}</td>
+                        <td>{$o.settle_amount/100|sprintf="%.2f",###}</td>
+                        <td>{switch name="$o->getData('auth_status')" }
+                            {case value="1"}<span class="text-warning">处理中</span>{/case}
+                            {case value="2"}<span class="text-success">已完成</span>{/case}
+                            {case value="3"}<span class="text-danger">驳回:{$o.reject_reason}</span>{/case}
+                            {/switch}</td>
+                        <td>{$o.auth_time|date="Y-m-d H:i:s",###}</td>
+                        <td>{$o.create_time|date="Y-m-d H:i:s",###}</td>
+                    </tr>
+                    {/volist}
+                    {/notempty}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{/block}

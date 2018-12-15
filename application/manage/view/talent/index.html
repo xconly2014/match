@@ -1,0 +1,199 @@
+{extend name="base" /}
+{block name="title"}大神认证审核 | 管理后台{/block}
+{block name="content"}
+<div class="row">
+    <div class="col-xs-12">
+        <nav class="navbar navbar-default" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <span class="navbar-brand">大神认证审核</span>
+                </div>
+                <div>
+                    <ul class="nav navbar-nav">
+                        <li {eq name="$Request.route.status" value=""}class="active"{/eq}><a href="/manage/talent">待审核</a></li>
+                        <li {eq name="$Request.route.status" value="2"}class="active"{/eq}><a href="/manage/talent/2">审核通过</a></li>
+                        <li {eq name="$Request.route.status" value="3"}class="active"{/eq}><a href="/manage/talent/3">审核失败</a></li>
+                        <li {eq name="$Request.route.status" value="0"}class="active"{/eq}><a href="/manage/talent/0">全部</a></li>
+                    </ul>
+                </div>
+                <form class="navbar-form navbar-left navbar-right" role="search" id="search-form">
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search">
+                    </div>
+                    <button type="button" class="btn btn-default">搜索</button>
+                </form>
+            </div>
+        </nav>
+    </div>
+</div>
+<div class="table-responsive" style="min-width: 1200px;">
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>昵称</th>
+            <th style="min-width: 80px;">最高段位</th>
+            <th>区服</th>
+            <th style="min-width: 80px;">系统</th>
+            <th>擅长英雄</th>
+            <th>成就</th>
+            <th>性别</th>
+            <th>手机号</th>
+            <th>微信</th>
+            <th>QQ</th>
+            <th>段位截图</th>
+            <th>身份证</th>
+            <th>微信二维码</th>
+            <th>支付</th>
+            <th>申请时间</th>
+            <th>审核时间</th>
+            <th>审核</th>
+        </tr>
+        </thead>
+        <tbody>
+        {notempty name="list"}
+        {volist name="list" id="talent"}
+        <tr>
+            <td>{$talent.id}</td>
+            <td><a href="/manage/user/{$talent.user.uid}">{$talent.user.nick|default=""}</a></td>
+            <td>{$talent.max_level}</td>
+            <td>{$talent.area}</td>
+            <td>{$talent.system}</td>
+            <td>{$talent.hero}</td>
+            <td>{$talent.honour}</td>
+            <td>{$talent.cert_sex == 1 ? '男' : '女'}</td>
+            <td>{$talent.tel}</td>
+            <td>{$talent.wx_account}</td>
+            <td>{$talent.qq_account}</td>
+            <td><img src="{$talent.honour_image}" style="width: 80px"/></td>
+            <td><img src="{$talent.idcard_image}" style="width: 80px"/></td>
+            <td><img src="{$talent.wx_qrcode}" style="width: 80px"/></td>
+            <td class="pay" data-id="{$talent.id}">{if condition="$talent->getData('pay_flag')==1 && $talent->talOrder"}
+                {$talent.talOrder.price}<br/>
+                {eq name="talent.auth_status" value="3"}
+                    {eq name="talent.refund_flag" value="1"}
+                        <label class="label label-info">已退款</label>
+                    {else}
+                        <button class="btn btn-xs btn-warning btn-refund">退款</button>
+                    {/eq}
+                {/eq}
+                {else}<span class="text-danger">未支付</span>
+                {/if}</td>
+            <td>{$talent.create_time|date="Y-m-d H:i:s",###}</td>
+            <td>{notempty name="talent.auth_time"}{$talent.auth_time|date='Y-m-d H:i:s',###}{/notempty}</td>
+
+            <td class="status" data-id="{$talent.id}">
+            {switch name="$talent.auth_status" }
+                {case value="1"}
+                    {eq name="talent.pay_flag" value="1"}
+                    <button class="btn btn-xs btn-success btn-pass">通过</button>
+                    <button class="btn btn-xs btn-danger btn-reject" data-toggle="modal" data-target="#rejModal">驳回</button>{/eq}{/case}
+                {case value="2"}<span class="text-success">已通过</span>{/case}
+                {case value="3"}<span class="text-danger">驳回:{$talent.reject_reason}</span>{/case}
+            {/switch}
+            </td>
+        </tr>
+        {/volist}
+        {/notempty}
+        </tbody>
+    </table>
+</div>
+
+{include file="page" /}
+
+<!-- 模态框（大图） -->
+<div class="modal fade" id="imgModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <img src="" style="max-width: 1200px;" />
+    </div><!-- /.modal -->
+</div>
+
+<!-- 模态框（驳回） -->
+<div class="modal fade" id="rejModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">驳回理由</h4>
+            </div>
+            <div class="modal-body">
+                <form role="form">
+                    <div class="form-group">
+                        <textarea class="form-control" rows="3" style="resize: none;"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btn-reject-submit">驳回</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+{/block}
+{block name="javascripts"}
+<script type="text/javascript">
+    $(function() {
+        $('td img').click(function() {
+            var src = $(this).attr('src');
+            $('#imgModal img').attr('src', src);
+            $('#imgModal').modal('show');
+        });
+        /* 搜索 */
+        $('#search-form button').click(function(){
+            var kw = $('#search-form input').val().trim();
+            window.location.href= '/manage/talent/{$Request.route.status|default="1"}?keyword=' + kw;
+        });
+        /* 通过 */
+        $('.btn-pass').click(function() {
+            var eleTd = $(this).parents('td'),
+                id = eleTd.attr('data-id');
+            if(confirm('确认通过审核？')) {
+                $.post('/manage/jsApi/pass', {id: id}, function (resp) {
+                    if (resp.result == '1') {
+                        eleTd.html('<span class="text-success">已通过</span>');
+                    } else {
+                        alert(resp.msg);
+                    }
+                });
+            }
+        });
+        /* 驳回 */
+        var rejModalId = 0;
+        $('.btn-reject').click(function() {
+            rejModalId = $(this).parents('td').attr('data-id');
+        });
+        $('#btn-reject-submit').click(function () {
+            var modal = $(this).parents('#rejModal'),
+                reason = modal.find('textarea').val().trim();
+            if(reason) {
+                $.post('/manage/jsApi/reject', {id: rejModalId, reason: reason}, function (resp) {
+                    if(resp.result == '1') {
+                        $('.pay[data-id='+rejModalId+']').append('<button class="btn btn-xs btn-warning btn-refund">退款</button>');
+                        $('.status[data-id='+rejModalId+']').html('<span class="text-danger">驳回:'+ reason +'</span>');
+                        modal.modal('hide');
+                    } else {
+                        alert(resp.msg);
+                    }
+                });
+            }
+        });
+        /* 退款 */
+        $('table').on('click', '.btn-refund', function() {
+            var obj = $(this),
+                eleTd = $(this).parents('td'),
+                id = eleTd.attr('data-id');
+            if(confirm('将订单资费退还到用户钱包？')) {
+                $.post('/manage/jsApi/tal_refund', {id: id}, function (resp) {
+                    if (resp.code == '1') {
+                        eleTd.find('.btn-refund').replaceWith('<label class="label label-info">已退款</label>');
+                        obj.remove();
+                    } else {
+                        alert(resp.message);
+                    }
+                });
+            }
+        });
+    });
+</script>
+{/block}

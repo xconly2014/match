@@ -1,0 +1,315 @@
+{extend name="base" /}
+{block name="style"}
+{/block}
+
+{block name="content"}
+<div class="container">
+    <div class="blog-header">
+        <h2 class="blog-title">{$name?'修改':'创建'}接口</h2>
+        <p class="lead blog-description"> 接口编辑可能覆盖原有文件，请求事先做好代码备份。建议只在本地使用此功能.</p>
+    </div>
+    <div class="row">
+        <div class="col-sm-8 blog-main">
+            <div class="blog-post">
+                <form class="form-horizontal" role="form" id="form-main">
+                    <div class="row">
+                        {if condition="$name"}
+                        <div class="form-group col-sm-6">
+                            <label for="group" class="col-sm-3 control-label">分组</label>
+                            <span class="col-sm-9 form-control-static">
+                        {$info.group}
+                    </span>
+                        </div>
+                        {else}
+                        <div class="form-group col-sm-6">
+                            <label for="group" class="col-sm-3 control-label">分组</label>
+                            <div class="col-sm-9">
+                                <select class="form-control" id="group">
+                                    {volist name="groups" id="group"}
+                                    <option value="{$group}">{$group}</option>
+                                    {/volist}
+                                    <option value="">新建分组...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-6" id="other-group-box" style="display: none;">
+                            <label for="other-group" class="col-sm-3 control-label">==== &gt;</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="other-group" placeholder="" value="">
+                            </div>
+                        </div>
+                        {/if}
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-sm-6">
+                            <label for="uri" class="col-sm-3 control-label">Url</label>
+                            <div class="col-sm-9">
+                                <select class="form-control" id="method">
+                                    <option {if condition="isset($info.form_method) && $info.form_method == 'GET'"}selected="selected"{/if} value="GET">GET</option>
+                                    <option {if condition="isset($info.form_method) && $info.form_method == 'POST'"}selected="selected"{/if} value="POST">POST</option>
+                                    <option {if condition="isset($info.form_method) && $info.form_method == 'PUT'"}selected="selected"{/if} value="PUT">PUT</option>
+                                    <option {if condition="isset($info.form_method) && $info.form_method == 'DELETE'"}selected="selected"{/if} value="DELETE">DELETE</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <div class="col-sm-12">
+                                <div class="input-group">
+                                    {if condition="$name"}
+                                    <span class="input-group-addon">/api/{$info.version|default='v1'}/</span>
+                                    {else}
+                                    <span class="input-group-addon">/api/</span>
+                                    <input type="text" class="form-control" id="version" placeholder="user/:uid/home" value="{$info.version|default='v1'}">
+                                    <span class="input-group-addon">/</span>
+                                    {/if}
+                                    <input type="text" class="form-control" id="uri" placeholder="user/:uid/home" value="{$info.uri|default=''}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-sm-6">
+                            <label for="controller" class="col-sm-3 control-label">控制器</label>
+                            <div class="col-sm-9">
+                                <div class="input-group">
+                                    {if condition="$name"}
+                                    <span class="input-group-addon">/v1/{$info.controller}::</span>
+                                    <input type="hidden" class="form-control" id="controller" value="{$info.controller}">
+                                    {else}
+                                    <span class="input-group-addon">/v1/</span>
+                                    <input type="text" class="form-control" id="controller" placeholder="User" value="{$info.controller}">
+                                    <span class="input-group-addon">::</span>
+                                    {/if}
+                                    <input type="text" class="form-control" id="action" placeholder="login" value="{$info.action}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group col-sm-6">
+                            <label for="title" class="col-sm-3 control-label">中文名称</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="title" placeholder="用户登录" value="{$info.title|default=''}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-sm-6">
+                            <label for="cache_time" class="col-sm-3 control-label">缓存秒数</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="cache_time" placeholder="留空使用系统默认,null表示不缓存" value="{$info.cache_time|default=''}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <table class="table table-striped">
+                            <caption>参数列表<button type="button" class="btn btn-warning btn-xs pull-right" id="addParam"><i class="glyphicon glyphicon-plus"></i> 增加参数</button></caption>
+                            <thead>
+                            <tr>
+                                <th>参数名字</th>
+                                <th>验证规则</th>
+                                <th>默认值</th>
+                                <th>说明</th>
+                                <th style="min-width: 130px;">操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {notempty name="info.param"}
+                            {volist name="info.param", id="param"}
+                            <tr>
+                                <td>{$param.name}</td>
+                                <td>{$param.rule|default=""}</td>
+                                <td>{$param.default|default=""}</td>
+                                <td>{$param.desc|default=""}</td>
+                                <td>
+                                    <button type="button" class="btn btn-primary btn-xs editParam"><i class="glyphicon glyphicon-edit"></i> 修改</button>
+                                    <button type="button" class="btn btn-danger btn-xs delParam"><i class="glyphicon glyphicon-remove"></i> 删除</button>
+                                </td>
+                            </tr>
+                            {/volist}
+                            {/notempty}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group col-sm-12">
+                            <label for="desc" class="control-label">接口描述:</label>
+                            <textarea class="form-control" id="desc" rows="5">{$info.description|default=""}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="bottom pull-right">
+                        <button type="button" class="btn btn-default" id="btn-main-submit">提交</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-sm-3 col-sm-offset-1 blog-sidebar">
+            <div class="sidebar-module sidebar-module-inset">
+                <h4>参数实体</h4>
+                <p>{$info.doc}</p>
+            </div>
+            <div class="sidebar-module sidebar-module-inset">
+                <h4>控制器</h4>
+                <p>{$name}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 模态框（添加|修改参数） -->
+<div class="modal fade" id="paramModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    &times;
+                </button>
+                <h4 class="modal-title" id="myModalLabel">
+                    接口参数编辑
+                </h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal" role="form" id="form-param">
+                    <div class="form-group">
+                        <label for="p-name" class="col-sm-2 control-label">参数名称</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="p-name" placeholder="">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="p-rule" class="col-sm-2 control-label">验证规则</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="p-rule" placeholder="" value="require|number">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="p-default" class="col-sm-2 control-label">默认值</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="p-default" placeholder="" value="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="p-desc" class="col-sm-2 control-label">说明</label>
+                        <div class="col-sm-10">
+                            <textarea class="form-control" id="p-desc" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary form-param-submit">确认</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+{/block}
+{block name="javascripts"}
+<script type="text/javascript">
+    function changingOverGroup() {
+        if($('#group').val()) {
+            $('#other-group-box').hide();
+        } else {
+            $('#other-group-box').show();
+        }
+    }
+    $(function(){
+        /* 分组切换 */
+        changingOverGroup();
+        $('#group').change(function () {
+            changingOverGroup();
+        });
+        /* 添加参数 */
+        $('#addParam').click(function () {
+            $('#form-param').find('input, textarea').val('');
+            $('#form-main tbody tr').removeClass('active');
+            $('#paramModal').modal('show');
+        });
+
+        /* 编辑参数 */
+        $('#form-main').on('click', '.editParam', function () {
+            var items = $(this).parent().parent().find('td');
+            $('#p-name').val(items.eq(0).text());
+            $('#p-rule').val(items.eq(1).text());
+            $('#p-default').val(items.eq(2).text());
+            $('#p-desc').val(items.eq(3).text());
+
+            $('#form-main tbody tr').removeClass('active');
+            $(this).parent().parent().addClass('active');
+            $('#paramModal').modal('show');
+        });
+        /* 删除参数 */
+        $('#form-main').on('click', '.delParam', function () {
+            $(this).parent().parent().remove();
+        });
+
+        /* 提交参数编辑 */
+        $('.form-param-submit').click(function() {
+            var pName = $('#p-name').val(),
+                pRule = $('#p-rule').val(),
+                pDefault = $('#p-default').val(),
+                pDesc = $('#p-desc').val();
+            var html = '<tr>\n' +
+                '<td>'+pName+'</td>\n' +
+                '<td>'+pRule+'</td>\n' +
+                '<td>'+pDefault+'</td>\n' +
+                '<td>'+pDesc+'</td>\n' +
+                '<td>\n' +
+                '    <button type="button" class="btn btn-primary btn-xs editParam"><i class="glyphicon glyphicon-edit"></i> 修改</button>\n' +
+                '    <button type="button" class="btn btn-danger btn-xs delParam"><i class="glyphicon glyphicon-remove"></i> 删除</button>\n' +
+                '</td>\n' +
+                '</tr>';
+            var tBody = $('#form-main tbody');
+            if( tBody.find('.active').length ) {
+                tBody.find('.active').replaceWith(html);
+            } else {
+                tBody.append(html);
+            }
+            $('#paramModal').modal('hide');
+        });
+
+        /* 提交主表单 */
+        $('#btn-main-submit').click(function() {
+            var group = $('#group').val() ? $('#group').val() : $('#other-group').val(),
+                version = $('#version').val(),
+                uri = $('#uri').val(),
+                controller = $('#controller').val(),
+                action = $('#action').val(),
+                method = $('#method').val(),
+                title = $('#title').val(),
+                cacheTime = $('#cache_time').val(),
+                desc = $('#desc').val().trim();
+
+            var param = [];
+            $('#form-main tbody tr').each(function() {
+                var tds = $(this).find('td');
+                param.push({name: tds.eq(0).text(), rule: tds.eq(1).text().trim(), default: tds.eq(2).text(), desc: tds.eq(3).text()});
+            });
+
+            var data = {group: group, version: version, uri: uri, controller: controller, action: action,
+                method: method, title: title, cache_time: cacheTime, desc: desc, param: param};
+
+            $.ajax({
+                url: '',
+                type: 'POST',
+                data: data,
+                dataType: 'json',
+                success: function(result) {
+                    if(result.result == '1') {
+                        alert('保存成功!');
+                        if(result.name) {
+                            window.location.href = "?name=" + result.name;
+                        }
+                    } else {
+                        alert(result.msg);
+                    }
+                }
+            });
+
+        });
+    });
+</script>
+{/block}
